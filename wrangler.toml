@@ -1,0 +1,105 @@
+# ════════════════════════════════════════════
+# Cloudflare Pages / Workers 配置文件
+# DTx-GI Platform - 数字化胃肠健康管理平台
+# ════════════════════════════════════════════
+
+name = "dtx-gi-platform"
+compatibility_date = "2026-07-04"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Pages 构建设置 ──
+[build]
+command = "npm run build"
+cwd = "."
+
+[build.upload]
+format = "directory"
+dir = "dist"
+main_page = "index.html"
+
+# ── 路由规则 ──
+# 单页应用 (SPA) - 所有路由指向 index.html
+[[routes]]
+pattern = "/api/*"
+custom_domain = false
+
+# SPA fallback: 所有非 API 和静态资源请求指向 index.html
+[[routes]]
+pattern = "/assets/*"
+custom_domain = false
+
+# ── Headers ──
+[headers]
+  # 全局安全响应头
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+  # 静态资源缓存策略
+  [[headers.rules]]
+    pattern = "/assets/*"
+    [headers.rules.values]
+      Cache-Control = "public, max-age=31536000, immutable"
+
+  # HTML 不缓存
+  [[headers.rules]]
+    pattern = "*.html"
+    [headers.rules.values]
+      Cache-Control = "public, max-age=0, must-revalidate"
+
+  # PWA manifest 和 service worker
+  [[headers.rules]]
+    pattern = "manifest.json"
+    [headers.rules.values]
+      Cache-Control = "public, max-age=3600"
+      Content-Type = "application/manifest+json"
+
+  [[headers.rules]]
+    pattern = "sw.js"
+    [headers.rules.values]
+      Cache-Control = "public, max-age=0, must-revalidate"
+      Service-Worker-Allowed = "/"
+
+# ── 环境变量 (占位符，实际值通过 Cloudflare Dashboard 或 CLI 设置) ──
+[vars]
+  APP_NAME = "DTx-GI Platform"
+  APP_VERSION = "1.0.0"
+
+# ── 秘钥 (在 Cloudflare Dashboard 中配置) ──
+# [secrets]
+# API_BASE_URL
+# AUTH_DOMAIN
+# ANALYTICS_ID
+
+# ── Durable Objects (如需) ──
+# [[durable_objects.bindings]]
+# name = "SESSION_STORE"
+# class_name = "SessionStore"
+
+# ── KV Namespaces (如需) ──
+# [[kv_namespaces]]
+# binding = "CACHE_KV"
+# id = "your-kv-namespace-id"
+
+# ── D1 Database (如需) ──
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "dtx-gi-db"
+# database_id = "your-d1-database-id"
+
+# ── 开发环境覆盖 ──
+[env.dev]
+name = "dtx-gi-platform-dev"
+
+[env.dev.vars]
+  APP_ENV = "development"
+
+# ── 预发布环境 ──
+[env.staging]
+name = "dtx-gi-platform-staging"
+
+[env.staging.vars]
+  APP_ENV = "staging"
